@@ -1,0 +1,18 @@
+{
+  "name": "Anyworld — infinite fandom roleplay",
+  "short_name": "Anyworld",
+  "description": "Step into any world. A living narrator sets the scene, voices every character, and keeps action and dialogue in balance while you decide what happens next — running privately in your browser.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14100d",
+  "theme_color": "#14100d",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 <title>Anyworld — infinite fandom roleplay</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#14100d" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Anyworld" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
@@ -852,6 +861,14 @@
   }
   boot();
 })();
+</script>
+<script>
+  // Register the service worker so the installed app can launch offline.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
 </script>
 </body>
 </html>
