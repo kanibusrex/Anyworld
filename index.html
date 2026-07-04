@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+<title>Anyworld — infinite fandom roleplay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #14100d;
+    --bg-2: #1b1611;
+    --panel: rgba(255, 248, 240, 0.045);
+    --panel-2: rgba(255, 248, 240, 0.075);
+    --border: rgba(236, 226, 214, 0.13);
+    --border-strong: rgba(236, 226, 214, 0.26);
+    --ink: #ece2d4;
+    --ink-dim: rgba(236, 226, 214, 0.64);
+    --ink-faint: rgba(236, 226, 214, 0.36);
+    --accent: #e6a95a;
+    --accent-soft: rgba(230, 169, 90, 0.16);
+    --accent-2: #c9663b;
+    --danger: #e2705f;
+    --ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --serif: 'Spectral', Georgia, 'Times New Roman', serif;
+    --display: 'Fraunces', Georgia, serif;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+  body {
+    font-family: var(--ui);
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(1200px 620px at 50% -12%, rgba(230, 169, 90, 0.16), transparent 60%),
+      radial-gradient(900px 700px at 108% 8%, rgba(201, 102, 59, 0.12), transparent 62%),
+      linear-gradient(180deg, var(--bg), var(--bg-2));
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.55);
+  }
+
+  .app { position: relative; z-index: 1; height: 100vh; height: var(--app-h, 100dvh); display: flex; flex-direction: column; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: 0.9rem;
+    padding: calc(0.75rem + var(--sat)) calc(clamp(0.9rem, 3vw, 1.6rem) + var(--sar)) 0.75rem calc(clamp(0.9rem, 3vw, 1.6rem) + var(--sal));
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+  .brand { display: flex; align-items: baseline; gap: 0.55rem; margin-right: auto; min-width: 0; }
+  .brand .mark { font-size: 1.25rem; line-height: 1; filter: drop-shadow(0 2px 6px rgba(230,169,90,0.35)); }
+  .brand h1 { font-family: var(--display); font-weight: 600; font-size: clamp(1.15rem, 2.4vw, 1.5rem); letter-spacing: 0.01em; white-space: nowrap; }
+  .brand .sub { font-size: 0.74rem; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 640px) { .brand .sub { display: none; } }
+
+  .btn {
+    font-family: var(--ui); font-size: 0.86rem; font-weight: 500; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 11px;
+    padding: 0.5rem 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;
+    transition: background 0.18s, border-color 0.18s, transform 0.1s; white-space: nowrap;
+  }
+  .btn:hover { background: var(--panel-2); border-color: var(--border-strong); }
+  .btn:active { transform: translateY(1px); }
+  .btn.icon { padding: 0.5rem 0.6rem; }
+  .btn.primary { background: linear-gradient(180deg, var(--accent), #d5964a); color: #26170a; border-color: transparent; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn.ghost { background: transparent; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ---------- scroll area ---------- */
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(236,226,214,0.22) transparent; }
+  .scroll::-webkit-scrollbar { width: 9px; }
+  .scroll::-webkit-scrollbar-thumb { background: rgba(236,226,214,0.18); border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
+  .wrap { width: 100%; max-width: 760px; margin: 0 auto; padding: clamp(1rem, 3vw, 2rem) clamp(0.9rem, 3vw, 1.5rem) 2rem; }
+
+  /* ---------- setup screen ---------- */
+  .setup .lead { text-align: center; margin: 1.2rem 0 1.6rem; }
+  .setup .lead .kicker { font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .setup .lead h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.08; margin: 0.5rem 0 0.6rem; }
+  .setup .lead p { color: var(--ink-dim); max-width: 47ch; margin: 0 auto; font-size: 1rem; line-height: 1.5; }
+
+  .banner {
+    display: flex; gap: 0.6rem; align-items: flex-start; max-width: 100%;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 0.7rem 0.9rem; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.45; margin-bottom: 1.1rem;
+  }
+  .banner .ic { flex-shrink: 0; }
+  .banner b { color: var(--ink); }
+  .banner.warn { background: rgba(226,112,95,0.08); border-color: rgba(226,112,95,0.35); color: #f0cfc7; }
+  .banner.warn b { color: #f7d9d2; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: clamp(1.1rem, 3vw, 1.7rem); box-shadow: var(--shadow); }
+  .field { margin-bottom: 1.15rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--ink); margin-bottom: 0.15rem; }
+  .field > .hint { font-size: 0.76rem; color: var(--ink-faint); margin-bottom: 0.5rem; }
+
+  input[type="text"], textarea, select {
+    width: 100%; font-family: var(--ui); font-size: 16px; color: var(--ink);
+    background: rgba(0,0,0,0.28); border: 1px solid var(--border); border-radius: 12px;
+    padding: 0.7rem 0.85rem; outline: none; transition: border-color 0.18s, background 0.18s;
+  }
+  textarea { resize: vertical; min-height: 74px; line-height: 1.5; }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); background: rgba(0,0,0,0.35); }
+  input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+  select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ece2d4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>"); background-repeat: no-repeat; background-position: right 0.85rem center; padding-right: 2.2rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+  .chip { font-size: 0.8rem; color: var(--ink-dim); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 0.32rem 0.7rem; cursor: pointer; transition: all 0.15s; font-family: var(--ui); }
+  .chip:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+
+  .setup-actions { display: flex; gap: 0.7rem; align-items: center; margin-top: 1.4rem; }
+  .setup-actions .btn.primary { flex: 1; justify-content: center; padding: 0.75rem; font-size: 0.98rem; }
+  .keynote { font-size: 0.78rem; color: var(--ink-faint); text-align: center; margin-top: 0.9rem; line-height: 1.5; }
+  .keynote a { color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ---------- context bar ---------- */
+  .ctxbar { display: none; align-items: center; gap: 0.55rem; max-width: 760px; margin: 0 auto; padding: 0.55rem clamp(0.9rem, 3vw, 1.5rem); font-size: 0.82rem; color: var(--ink-dim); border-bottom: 1px solid var(--border); }
+  .ctxbar.show { display: flex; }
+  .ctxbar .world { color: var(--ink); font-weight: 600; }
+  .ctxbar .who { color: var(--accent); }
+  .ctxbar .dot { color: var(--ink-faint); }
+  .ctxbar .model { margin-left: auto; color: var(--ink-faint); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+
+  /* ---------- messages ---------- */
+  .msg { margin: 0 0 1.5rem; animation: rise 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .narr { position: relative; padding-left: 1rem; }
+  .narr::before { content: ""; position: absolute; left: 0; top: 0.35rem; bottom: 0.35rem; width: 2px; border-radius: 2px; background: linear-gradient(180deg, var(--accent), transparent); }
+  .narr .prose { font-family: var(--serif); font-size: 1.09rem; line-height: 1.72; color: var(--ink); }
+  .narr .prose p { margin: 0 0 0.85rem; }
+  .narr .prose p:last-child { margin-bottom: 0; }
+  .narr .prose em { font-style: italic; color: #f0dcc0; }
+  .narr .prose strong { font-weight: 600; color: #fff; }
+  .narr .prose.streaming { white-space: pre-wrap; }
+
+  .you { display: flex; justify-content: flex-end; }
+  .you .bubble { max-width: 82%; background: var(--accent-soft); border: 1px solid rgba(230,169,90,0.28); border-radius: 14px 14px 4px 14px; padding: 0.6rem 0.85rem; font-family: var(--serif); font-size: 1.02rem; line-height: 1.5; color: var(--ink); }
+  .you .tag { display: block; font-family: var(--ui); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 0.15rem; }
+  .you .bubble.ooc { background: var(--panel); border-color: var(--border); }
+  .you .bubble.ooc .tag { color: var(--ink-faint); }
+
+  .thinking { display: flex; align-items: center; gap: 0.55rem; color: var(--ink-faint); font-style: italic; font-family: var(--serif); padding-left: 1rem; }
+  .thinking .dots { display: inline-flex; gap: 3px; }
+  .thinking .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.5; animation: pulse 1.2s ease-in-out infinite; }
+  .thinking .dots i:nth-child(2) { animation-delay: 0.2s; }
+  .thinking .dots i:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+  /* ---------- model loading card ---------- */
+  .loadcard { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 1rem 1.1rem; }
+  .loadcard .lc-title { font-family: var(--display); font-weight: 600; font-size: 1.05rem; margin-bottom: 0.7rem; display: flex; align-items: center; gap: 0.5rem; }
+  .loadcard .lc-bar { height: 8px; border-radius: 6px; background: rgba(0,0,0,0.35); overflow: hidden; }
+  .loadcard .lc-fill { height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, var(--accent-2), var(--accent)); transition: width 0.3s ease; }
+  .loadcard .lc-text { font-size: 0.8rem; color: var(--ink-dim); margin-top: 0.55rem; font-variant-numeric: tabular-nums; }
+  .loadcard .lc-note { font-size: 0.75rem; color: var(--ink-faint); margin-top: 0.5rem; line-height: 1.45; }
+
+  .errbox { background: rgba(226,112,95,0.1); border: 1px solid rgba(226,112,95,0.35); border-radius: 12px; padding: 0.75rem 0.9rem; color: #f3c7bf; font-size: 0.88rem; line-height: 1.45; margin: 0 0 1.2rem; }
+  .errbox b { color: #f7d9d2; }
+  .errbox .retry { margin-top: 0.5rem; }
+
+  /* ---------- composer ---------- */
+  .composer-wrap { border-top: 1px solid var(--border); background: linear-gradient(180deg, transparent, rgba(0,0,0,0.25)); padding: 0.75rem calc(clamp(0.9rem, 3vw, 1.5rem) + var(--sar)) calc(0.9rem + var(--sab)) calc(clamp(0.9rem, 3vw, 1.5rem) + var(--sal)); }
+  .composer { max-width: 760px; margin: 0 auto; display: flex; align-items: flex-end; gap: 0.6rem; }
+  .composer .inbox { flex: 1; display: flex; align-items: flex-end; gap: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 16px; padding: 0.5rem 0.55rem 0.5rem 0.9rem; transition: border-color 0.18s; }
+  .composer .inbox:focus-within { border-color: var(--accent); }
+  .composer textarea { flex: 1; border: none; background: transparent; padding: 0.3rem 0; min-height: 24px; max-height: 168px; font-family: var(--serif); font-size: 1.02rem; line-height: 1.5; resize: none; }
+  .sendbtn { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(180deg, var(--accent), #d5964a); color: #26170a; display: grid; place-items: center; transition: filter 0.15s, transform 0.1s; }
+  .sendbtn:hover { filter: brightness(1.06); }
+  .sendbtn:active { transform: scale(0.94); }
+  .sendbtn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .sendbtn.stop { background: var(--panel-2); color: var(--danger); border: 1px solid var(--border); }
+  .sendbtn svg { width: 19px; height: 19px; }
+  .comp-hint { max-width: 760px; margin: 0.4rem auto 0; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; font-size: 0.72rem; color: var(--ink-faint); }
+  .comp-hint .regen { color: var(--ink-dim); background: none; border: none; cursor: pointer; font-family: var(--ui); font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0; }
+  .comp-hint .regen:hover { color: var(--accent); }
+  .comp-hint .regen:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---------- modal ---------- */
+  .modal-bg { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,0.62); backdrop-filter: blur(5px); display: none; place-items: center; padding: calc(1rem + var(--sat)) calc(1rem + var(--sar)) calc(1rem + var(--sab)) calc(1rem + var(--sal)); }
+  .modal-bg.show { display: grid; animation: fade 0.2s; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .modal { width: 100%; max-width: 460px; background: linear-gradient(165deg, #221b15, #17120e); border: 1px solid var(--border-strong); border-radius: 20px; box-shadow: var(--shadow); padding: 1.4rem; animation: rise 0.3s cubic-bezier(0.16,1,0.3,1); max-height: 90vh; max-height: 90dvh; overflow-y: auto; }
+  .modal h3 { font-family: var(--display); font-weight: 600; font-size: 1.25rem; margin-bottom: 0.25rem; }
+  .modal .msub { font-size: 0.82rem; color: var(--ink-dim); margin-bottom: 1.2rem; line-height: 1.45; }
+  .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.3rem; }
+  .privacy { font-size: 0.75rem; color: var(--ink-faint); line-height: 1.45; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+  .privacy b { color: var(--ink-dim); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">✦</span>
+        <h1>Anyworld</h1>
+        <span class="sub">— roleplay in any story ever told · runs on your device</span>
+      </div>
+      <button class="btn ghost" id="new-btn" title="Start a new adventure">✧ New</button>
+      <button class="btn icon" id="settings-btn" title="Settings">⚙</button>
+    </header>
+
+    <div class="ctxbar" id="ctxbar">
+      <span class="world" id="ctx-world">—</span>
+      <span class="dot" id="ctx-sep">·</span>
+      <span class="who" id="ctx-who"></span>
+      <span class="model" id="ctx-model"></span>
+    </div>
+
+    <div class="scroll" id="scroll">
+      <div class="wrap">
+        <!-- SETUP -->
+        <section class="setup" id="setup">
+          <div class="lead">
+            <div class="kicker">Collaborative interactive fiction</div>
+            <h2>Step into any world.</h2>
+            <p>Name a fandom — or invent your own universe. A living narrator sets the scene, voices every character, and keeps action and dialogue in balance while <em>you</em> decide what happens next. No account, no key — the AI runs entirely in your browser.</p>
+          </div>
+
+          <div class="banner" id="gpu-banner">
+            <span class="ic">🖥️</span>
+            <span id="gpu-text">Checking your browser…</span>
+          </div>
+
+          <div class="card">
+            <div class="field">
+              <label for="fandom">Fandom or setting</label>
+              <div class="hint">A book, show, game, movie — or describe an original world.</div>
+              <input type="text" id="fandom" placeholder="e.g. Harry Potter, Cyberpunk 2077, a noir detective city…" autocomplete="off" />
+              <div class="chips" id="chips"></div>
+            </div>
+            <div class="field">
+              <label for="character">Your character <span style="color:var(--ink-faint);font-weight:400">(optional)</span></label>
+              <input type="text" id="character" placeholder="e.g. a rookie Auror named Wren, or leave blank to be yourself" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="scenario">Opening scenario <span style="color:var(--ink-faint);font-weight:400">(optional)</span></label>
+              <textarea id="scenario" placeholder="Where and how does your story begin? Leave blank and the narrator will surprise you."></textarea>
+            </div>
+            <div class="setup-actions">
+              <button class="btn primary" id="begin-btn">Begin the adventure →</button>
+            </div>
+            <div class="keynote" id="keynote"></div>
+          </div>
+        </section>
+
+        <section class="log hidden" id="log"></section>
+      </div>
+    </div>
+
+    <div class="composer-wrap hidden" id="composer-wrap">
+      <div class="composer">
+        <div class="inbox">
+          <textarea id="input" rows="1" placeholder="What do you do? (Shift+Enter for a new line)"></textarea>
+        </div>
+        <button class="sendbtn" id="send-btn" title="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="comp-hint">
+        <button class="regen" id="regen-btn" title="Rewrite the narrator's last reply">↻ Regenerate</button>
+        <span id="balance-note">action &amp; dialogue auto-balanced</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- settings modal -->
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <h3>Settings</h3>
+      <div class="msub">Anyworld runs a small AI model right inside your browser using WebGPU — nothing is sent to any server.</div>
+
+      <div class="field">
+        <label for="model">Model</label>
+        <div class="hint" id="model-hint">Larger models tell richer stories but download more and run slower.</div>
+        <select id="model"><option>Loading available models…</option></select>
+      </div>
+      <div class="field">
+        <label for="creativity">Creativity</label>
+        <select id="creativity">
+          <option value="0.6">Grounded — steadier, more consistent</option>
+          <option value="0.8" selected>Balanced</option>
+          <option value="1.0">Wild — surprising, less predictable</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="length">Response length</label>
+        <select id="length">
+          <option value="384">Brief — snappy back-and-forth</option>
+          <option value="700" selected>Balanced</option>
+          <option value="1200">Immersive — longer scenes</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="modal-close">Cancel</button>
+        <button class="btn primary" id="modal-save">Save</button>
+      </div>
+      <div class="privacy"><b>Fully local &amp; private:</b> The model downloads once and is cached in your browser. Your stories and every word generated stay on your device — Anyworld has no server and needs no account.</div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm";
+
+  // ---------- device detection ----------
+  const forceMobile = /[?&]mobile=1/.test(location.search);
+  const uaMobile = /Android|iPhone|iPod|Mobi/i.test(navigator.userAgent || "");
+  const coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  const smallScreen = Math.min((window.screen && screen.width) || 9999, (window.screen && screen.height) || 9999) <= 820;
+  const isMobile = forceMobile || uaMobile || (coarse && smallScreen);
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, fb) { try { const v = localStorage.getItem("anyworld." + k); return v === null ? fb : JSON.parse(v); } catch { return fb; } },
+    set(k, v) { try { localStorage.setItem("anyworld." + k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem("anyworld." + k); } catch {} }
+  };
+  function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function gbLabel(mb) { return mb ? "~" + (mb / 1024).toFixed(1) + " GB" : ""; }
+  function shortModel(id) { return String(id).replace(/-(q4f16_1|q4f32_1|q0f16|q0f32)-MLC.*$/i, "").replace(/-MLC$/i, ""); }
+
+  // ---------- settings ----------
+  const defaultSettings = () => ({ model: "", temperature: 0.8, maxTokens: isMobile ? 384 : 700 });
+  let settings = Object.assign(defaultSettings(), store.get("settings", {}));
+
+  // ---------- state ----------
+  let adventure = store.get("adventure", null);
+  let streaming = false, stopRequested = false;
+  const webgpuOK = !!(navigator.gpu);
+
+  // ---------- WebLLM engine ----------
+  let webllm = null;          // the imported module
+  let modelList = null;       // curated [{model_id, vram_required_MB}]
+  let engine = null;          // active MLCEngine
+  let engineModel = null;     // model id the engine was created for
+  let enginePromise = null;   // in-flight creation
+
+  const PREFERRED = [
+    /Llama-3\.2-3B-Instruct/i, /Qwen2\.5-3B-Instruct/i, /Hermes-3-Llama-3\.2-3B/i,
+    /Llama-3\.1-8B-Instruct/i, /Qwen2\.5-7B-Instruct/i, /gemma-2-2b-it/i,
+    /Phi-3\.5-mini-instruct/i, /Llama-3\.2-1B-Instruct/i
+  ];
+  // On phones, default to a small model that fits mobile-Safari memory limits.
+  const MOBILE_PREFERRED = [
+    /Llama-3\.2-1B-Instruct/i, /Qwen2\.5-1\.5B-Instruct/i, /Qwen2\.5-0\.5B-Instruct/i,
+    /SmolLM2-1\.7B-Instruct/i, /gemma-2-2b-it/i, /Phi-3\.5-mini-instruct/i
+  ];
+
+  async function loadWebLLM() {
+    if (!webllm) webllm = await import(WEBLLM_URL);
+    return webllm;
+  }
+
+  function pickDefault(list) {
+    const prefs = isMobile ? MOBILE_PREFERRED : PREFERRED;
+    for (const rx of prefs) { const m = list.find((x) => rx.test(x.model_id)); if (m) return m.model_id; }
+    if (isMobile) {
+      const small = list.find((x) => (x.vram_required_MB || 1e9) <= 1200);
+      return (small || list[0] || { model_id: "" }).model_id;
+    }
+    const mid = list.find((x) => (x.vram_required_MB || 0) >= 1500 && (x.vram_required_MB || 0) <= 3200);
+    return (mid || list[Math.min(2, list.length - 1)] || list[0] || { model_id: "" }).model_id;
+  }
+
+  async function ensureModelList() {
+    const mod = await loadWebLLM();
+    if (!modelList) {
+      const all = (mod.prebuiltAppConfig && mod.prebuiltAppConfig.model_list) || [];
+      let chat = all.filter((m) => !/embed|whisper/i.test(m.model_id));
+      const chatOnly = chat.filter((m) => /(instruct|-it-|chat|hermes|vicuna|wizard|qwen)/i.test(m.model_id));
+      if (chatOnly.length >= 3) chat = chatOnly;
+      chat.sort((a, b) => (a.vram_required_MB || 1e9) - (b.vram_required_MB || 1e9));
+      modelList = chat;
+    }
+    if (!settings.model || !modelList.some((m) => m.model_id === settings.model)) {
+      settings.model = pickDefault(modelList);
+    }
+    return modelList;
+  }
+
+  function modelSize(id) { const m = (modelList || []).find((x) => x.model_id === id); return m ? gbLabel(m.vram_required_MB) : ""; }
+
+  function engineReady() { return !!engine && engineModel === settings.model; }
+
+  async function ensureEngine(onProgress) {
+    if (engineReady()) return engine;
+    if (enginePromise && engineModel === settings.model) return enginePromise;
+    await ensureModelList();
+    if (engine && engineModel !== settings.model) { try { await engine.unload(); } catch {} engine = null; }
+    engineModel = settings.model;
+    const mod = await loadWebLLM();
+    enginePromise = mod.CreateMLCEngine(settings.model, {
+      initProgressCallback: (r) => { if (onProgress) onProgress(r.progress || 0, r.text || ""); }
+    }).then((e) => { engine = e; enginePromise = null; return e; })
+      .catch((err) => { enginePromise = null; engineModel = null; throw err; });
+    return enginePromise;
+  }
+
+  // ---------- system prompt (the heart of it) ----------
+  function buildSystem(setup) {
+    const fandom = (setup.fandom || "an open, imaginative world of the player's choosing").trim();
+    const character = (setup.character || "").trim();
+    const who = character
+      ? "The player controls " + character + "."
+      : "The player controls their own original character — let them define who they are through their actions.";
+    return [
+      "You are the Narrator and Game Master of an immersive, collaborative text roleplay set in the world of " + fandom + ".",
+      "",
+      "WORLD & CANON",
+      "- Honor the established tone, locations, factions, rules of magic or technology, history, and characters of " + fandom + ".",
+      "- If the player introduces new details, adopt them as canon for this story.",
+      "",
+      "THE PLAYER",
+      "- " + who,
+      "- Never speak, act, think, decide, or narrate feelings for the player's character. Their choices are theirs alone.",
+      "- Offer them agency: present situations, then leave room for them to respond. Don't railroad.",
+      "",
+      "YOUR ROLE",
+      "- Portray the living world and every other character — allies, rivals, strangers, crowds, enemies, and the environment itself.",
+      "- Give non-player characters distinct, in-character voices, motives, and reactions.",
+      "",
+      "BALANCE (important)",
+      "- Weave together vivid action/description AND dialogue in every response. Never a wall of narration with no one speaking; never pure dialogue floating with no grounding in the scene.",
+      "- Aim for a natural mix: sensory scene-setting, characters doing things, and characters speaking. In quiet moments lean into atmosphere and NPC dialogue; in tense moments favor punchy action beats — but keep both present.",
+      "",
+      "CRAFT",
+      "- Write in second person (\"you\"), present tense, unless the player sets a different style.",
+      "- Keep replies focused: about 2–4 short paragraphs. Advance the scene, then pause at a natural beat that invites the player's next move. Don't end every reply with a literal question.",
+      "- Match the fandom's voice and keep content around PG-13 unless the player clearly steers otherwise.",
+      "- Stay inside the fiction. No out-of-character notes, no lists, no meta commentary.",
+      "- Exception: if the player's message begins with \"OOC:\", answer their out-of-character question briefly and plainly, then wait for them to continue the story."
+    ].join("\n");
+  }
+
+  function openingKick(setup) {
+    const s = (setup.scenario || "").trim();
+    if (s) return "Begin the adventure. Opening scenario: " + s + "\n\nEstablish this opening scene vividly and drop me in, then hand control to me.";
+    return "Begin the adventure. Establish an evocative opening scene that pulls me into this world and sets something in motion, then hand control to me.";
+  }
+
+  // ---------- prose formatting ----------
+  function fmt(text) {
+    let s = escapeHtml(text);
+    s = s.replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>");
+    return s.split(/\n{2,}/).map((p) => "<p>" + p.replace(/\n/g, "<br>") + "</p>").join("");
+  }
+
+  // ---------- DOM refs ----------
+  const scroll = $("scroll"), setupEl = $("setup"), logEl = $("log");
+  const composerWrap = $("composer-wrap"), inputEl = $("input"), sendBtn = $("send-btn"), regenBtn = $("regen-btn");
+  const ctxbar = $("ctxbar");
+
+  function nearBottom() { return scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 120; }
+  function toBottom(force) { if (force || nearBottom()) scroll.scrollTop = scroll.scrollHeight; }
+
+  function renderPlayerMsg(content) {
+    const ooc = /^\s*OOC:/i.test(content);
+    const div = document.createElement("div");
+    div.className = "msg you";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble" + (ooc ? " ooc" : "");
+    bubble.innerHTML = '<span class="tag">' + (ooc ? "Out of character" : "You") + "</span>";
+    const body = document.createElement("span");
+    body.textContent = ooc ? content.replace(/^\s*OOC:\s*/i, "") : content;
+    bubble.appendChild(body);
+    div.appendChild(bubble);
+    logEl.appendChild(div);
+  }
+  function renderNarrMsg(content) {
+    const div = document.createElement("div");
+    div.className = "msg narr";
+    const prose = document.createElement("div");
+    prose.className = "prose";
+    prose.innerHTML = fmt(content);
+    div.appendChild(prose);
+    logEl.appendChild(div);
+  }
+  function renderFromState() {
+    logEl.innerHTML = "";
+    (adventure.messages || []).forEach((m) => {
+      if (m.hidden) return;
+      if (m.role === "user") renderPlayerMsg(m.content);
+      else renderNarrMsg(m.content);
+    });
+  }
+
+  function showThinking() {
+    const div = document.createElement("div");
+    div.className = "msg thinking";
+    div.innerHTML = 'the story unfolds <span class="dots"><i></i><i></i><i></i></span>';
+    logEl.appendChild(div);
+    toBottom(true);
+    return div;
+  }
+
+  function showLoadingCard() {
+    const div = document.createElement("div");
+    div.className = "msg loadcard";
+    div.innerHTML =
+      '<div class="lc-title">⬇ Preparing the storyteller…</div>' +
+      '<div class="lc-bar"><div class="lc-fill"></div></div>' +
+      '<div class="lc-text">Starting up…</div>' +
+      '<div class="lc-note">The model (' + (modelSize(settings.model) || "a few GB") + ') downloads once and is cached in your browser — future adventures start instantly.</div>';
+    logEl.appendChild(div);
+    toBottom(true);
+    return div;
+  }
+  function updateLoadingCard(card, progress, text) {
+    if (!card) return;
+    const fill = card.querySelector(".lc-fill"), t = card.querySelector(".lc-text");
+    if (fill) fill.style.width = Math.max(2, Math.round((progress || 0) * 100)) + "%";
+    if (t && text) t.textContent = text.replace(/\s+/g, " ").trim();
+    toBottom(false);
+  }
+
+  function showError(message, onRetry) {
+    const div = document.createElement("div");
+    div.className = "errbox";
+    div.innerHTML = "<b>Something went wrong.</b><br>" + escapeHtml(message);
+    if (onRetry) {
+      const b = document.createElement("button");
+      b.className = "btn ghost retry";
+      b.textContent = "↻ Try again";
+      b.onclick = () => { div.remove(); onRetry(); };
+      div.appendChild(b);
+    }
+    logEl.appendChild(div);
+    toBottom(true);
+  }
+
+  // ---------- view mode ----------
+  function showSetup() {
+    setupEl.classList.remove("hidden");
+    logEl.classList.add("hidden");
+    composerWrap.classList.add("hidden");
+    ctxbar.classList.remove("show");
+    updateKeynote();
+  }
+  function showPlay() {
+    setupEl.classList.add("hidden");
+    logEl.classList.remove("hidden");
+    composerWrap.classList.remove("hidden");
+    const s = adventure.setup;
+    $("ctx-world").textContent = "✦ " + (s.fandom || "Open world");
+    if (s.character) { $("ctx-who").textContent = "you are " + s.character; $("ctx-sep").style.display = ""; $("ctx-who").style.display = ""; }
+    else { $("ctx-who").style.display = "none"; $("ctx-sep").style.display = "none"; }
+    $("ctx-model").textContent = shortModel(settings.model || "");
+    ctxbar.classList.add("show");
+  }
+
+  function updateGpuBanner() {
+    const b = $("gpu-banner"), t = $("gpu-text");
+    if (webgpuOK) {
+      b.classList.remove("warn");
+      if (isMobile) t.innerHTML = "<b>Runs on your phone — experimental.</b> On-device AI is heavy for phones, so Anyworld uses a smaller model here and works best on a recent device (e.g. iPhone 15/16). The first load downloads it once; if it stalls or crashes, try a laptop or desktop.";
+      else t.innerHTML = "<b>Ready to run locally.</b> The first adventure downloads a model once (a one-time wait), then everything is instant and offline.";
+    } else {
+      b.classList.add("warn");
+      if (isMobile) t.innerHTML = "<b>This phone can't run the local AI yet.</b> Anyworld needs <b>WebGPU</b> — update to <b>iOS 18+</b> with Safari, or open it on a desktop <b>Chrome</b>/<b>Edge</b>.";
+      else t.innerHTML = "<b>This browser can't run the local AI.</b> Anyworld needs <b>WebGPU</b> — please open it in a recent <b>Chrome</b> or <b>Edge</b> (desktop). Safari and older browsers aren't supported yet.";
+    }
+  }
+
+  function updateKeynote() {
+    const el = $("keynote");
+    const openS = "<a id='kn-settings'>settings</a>";
+    if (!webgpuOK) { el.innerHTML = "Once you're in a WebGPU browser, pick a model in " + openS + " and press begin."; }
+    else if (settings.model) { el.innerHTML = "Storyteller: <b style='color:var(--ink-dim)'>" + escapeHtml(shortModel(settings.model)) + "</b>" + (modelSize(settings.model) ? " · " + modelSize(settings.model) + " one-time download" : "") + ". Change it in " + openS + "."; }
+    else { el.innerHTML = "Everything runs in your browser — no key, no account. Choose a model in " + openS + " or just press begin for the default."; }
+    const l = $("kn-settings"); if (l) l.onclick = openSettings;
+  }
+
+  // ---------- turn orchestration ----------
+  function apiMessages() { return adventure.messages.map((m) => ({ role: m.role, content: m.content })); }
+
+  function setBusyUI(on) {
+    streaming = on;
+    regenBtn.disabled = on;
+    if (on) {
+      sendBtn.classList.add("stop");
+      sendBtn.title = "Stop";
+      sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>';
+    } else {
+      sendBtn.classList.remove("stop");
+      sendBtn.title = "Send";
+      sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+    }
+  }
+
+  async function requestNarration() {
+    if (!webgpuOK) { showError("Your browser doesn't support WebGPU, so the local AI can't run here. Try a recent desktop Chrome or Edge."); return; }
+
+    setBusyUI(true);
+    stopRequested = false;
+
+    // 1) make sure the model is loaded
+    let loadingCard = null;
+    try {
+      if (!engineReady()) {
+        loadingCard = showLoadingCard();
+        await ensureEngine((p, text) => updateLoadingCard(loadingCard, p, text));
+        if (loadingCard) { loadingCard.remove(); loadingCard = null; }
+      }
+    } catch (err) {
+      if (loadingCard) loadingCard.remove();
+      setBusyUI(false);
+      showError("Couldn't load the model — " + (err && err.message ? err.message : String(err)) + ". Check your connection or pick a smaller model in settings.", () => requestNarration());
+      return;
+    }
+
+    // 2) stream the narration
+    const indicator = showThinking();
+    let narrDiv = null, proseEl = null, acc = "";
+    function ensureEl() {
+      if (narrDiv) return;
+      indicator.remove();
+      narrDiv = document.createElement("div");
+      narrDiv.className = "msg narr";
+      proseEl = document.createElement("div");
+      proseEl.className = "prose streaming";
+      narrDiv.appendChild(proseEl);
+      logEl.appendChild(narrDiv);
+    }
+
+    try {
+      const system = buildSystem(adventure.setup);
+      const chunks = await engine.chat.completions.create({
+        stream: true,
+        temperature: settings.temperature,
+        max_tokens: settings.maxTokens,
+        messages: [{ role: "system", content: system }].concat(apiMessages())
+      });
+      for await (const chunk of chunks) {
+        const t = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+        if (t) { ensureEl(); acc += t; proseEl.textContent = acc; toBottom(false); }
+      }
+
+      if (acc.trim()) {
+        proseEl.classList.remove("streaming");
+        proseEl.innerHTML = fmt(acc);
+        adventure.messages.push({ role: "assistant", content: acc });
+        persist();
+      } else if (stopRequested) {
+        if (narrDiv) narrDiv.remove(); else indicator.remove();
+      } else {
+        if (narrDiv) narrDiv.remove(); else indicator.remove();
+        showError("The narrator came back empty. Try again, or pick a different model in settings.", () => requestNarration());
+      }
+    } catch (err) {
+      if (acc.trim()) {
+        proseEl.classList.remove("streaming");
+        proseEl.innerHTML = fmt(acc);
+        adventure.messages.push({ role: "assistant", content: acc });
+        persist();
+      } else {
+        if (narrDiv) narrDiv.remove(); else indicator.remove();
+        showError("Generation failed — " + (err && err.message ? err.message : String(err)), () => requestNarration());
+      }
+    } finally {
+      setBusyUI(false);
+      toBottom(false);
+    }
+  }
+
+  function persist() { store.set("adventure", adventure); }
+
+  // ---------- actions ----------
+  function beginAdventure() {
+    if (!webgpuOK) { updateGpuBanner(); $("gpu-banner").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    const setup = { fandom: $("fandom").value.trim(), character: $("character").value.trim(), scenario: $("scenario").value.trim() };
+    if (!setup.fandom && !setup.scenario) {
+      $("fandom").focus();
+      $("fandom").style.borderColor = "var(--danger)";
+      setTimeout(() => { $("fandom").style.borderColor = ""; }, 1200);
+      return;
+    }
+    adventure = { setup, messages: [{ role: "user", content: openingKick(setup), hidden: true }], createdAt: Date.now() };
+    persist();
+    renderFromState();
+    showPlay();
+    toBottom(true);
+    requestNarration();
+  }
+
+  function sendAction() {
+    const text = inputEl.value.trim();
+    if (!text || streaming) return;
+    inputEl.value = ""; autoGrow();
+    adventure.messages.push({ role: "user", content: text });
+    persist();
+    renderPlayerMsg(text);
+    toBottom(true);
+    requestNarration();
+  }
+
+  function regenerate() {
+    if (streaming || !adventure) return;
+    while (adventure.messages.length && adventure.messages[adventure.messages.length - 1].role === "assistant") adventure.messages.pop();
+    if (!adventure.messages.length) return;
+    persist();
+    renderFromState();
+    toBottom(true);
+    requestNarration();
+  }
+
+  function stopGeneration() {
+    if (!streaming) return;
+    stopRequested = true;
+    if (engine && engine.interruptGenerate) { try { engine.interruptGenerate(); } catch {} }
+  }
+
+  function newAdventure() {
+    stopGeneration();
+    if (adventure && adventure.messages && adventure.messages.some((m) => !m.hidden)) {
+      if (!confirm("Start a new adventure? Your current story will be cleared from this browser.")) return;
+    }
+    adventure = null;
+    store.del("adventure");
+    logEl.innerHTML = "";
+    showSetup();
+    $("fandom").focus();
+  }
+
+  // ---------- composer ----------
+  function autoGrow() { inputEl.style.height = "auto"; inputEl.style.height = Math.min(inputEl.scrollHeight, 168) + "px"; }
+  inputEl.addEventListener("input", autoGrow);
+  inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAction(); } });
+  sendBtn.addEventListener("click", () => { if (streaming) stopGeneration(); else sendAction(); });
+  regenBtn.addEventListener("click", regenerate);
+  $("begin-btn").addEventListener("click", beginAdventure);
+  $("new-btn").addEventListener("click", newAdventure);
+
+  // ---------- fandom chips ----------
+  const CHIPS = ["Harry Potter", "Star Wars", "The Witcher", "Marvel", "Naruto", "The Lord of the Rings", "Cyberpunk 2077", "Game of Thrones", "Star Trek", "Avatar: The Last Airbender", "Percy Jackson", "Pokémon"];
+  const chipsEl = $("chips");
+  CHIPS.forEach((c) => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.textContent = c;
+    b.onclick = () => { $("fandom").value = c; $("fandom").focus(); };
+    chipsEl.appendChild(b);
+  });
+
+  // ---------- settings modal ----------
+  const modal = $("modal");
+  let modelListFilled = false;
+  async function fillModelSelect() {
+    const sel = $("model");
+    try {
+      await ensureModelList();
+      sel.innerHTML = "";
+      modelList.forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m.model_id;
+        o.textContent = shortModel(m.model_id) + (m.vram_required_MB ? "  ·  " + gbLabel(m.vram_required_MB) : "");
+        sel.appendChild(o);
+      });
+      sel.value = settings.model;
+      modelListFilled = true;
+      updateKeynote();
+    } catch (err) {
+      sel.innerHTML = "";
+      const o = document.createElement("option");
+      o.value = settings.model || "";
+      o.textContent = "Couldn't load model list (offline?)";
+      sel.appendChild(o);
+    }
+  }
+  async function openSettings() {
+    $("creativity").value = String(settings.temperature);
+    $("length").value = String(settings.maxTokens);
+    modal.classList.add("show");
+    if (!modelListFilled) await fillModelSelect(); else $("model").value = settings.model;
+  }
+  function closeSettings() { modal.classList.remove("show"); }
+  function saveSettings() {
+    const chosen = $("model").value;
+    if (chosen) settings.model = chosen;
+    settings.temperature = parseFloat($("creativity").value) || 0.8;
+    settings.maxTokens = parseInt($("length").value, 10) || 700;
+    store.set("settings", settings);
+    closeSettings();
+    updateKeynote();
+    if (adventure) $("ctx-model").textContent = shortModel(settings.model || "");
+  }
+  $("settings-btn").addEventListener("click", openSettings);
+  $("modal-close").addEventListener("click", closeSettings);
+  $("modal-save").addEventListener("click", saveSettings);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeSettings(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("show")) closeSettings(); });
+
+  // ---------- mobile: keep layout sized to the visible viewport (keyboard-aware) ----------
+  function setAppHeight() {
+    const vv = window.visualViewport;
+    if (vv) {
+      document.documentElement.style.setProperty("--app-h", vv.height + "px");
+      if (vv.offsetTop) window.scrollTo(0, 0);
+    } else {
+      document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
+    }
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", setAppHeight);
+    window.visualViewport.addEventListener("scroll", setAppHeight);
+  }
+  window.addEventListener("resize", setAppHeight);
+  window.addEventListener("orientationchange", () => setTimeout(setAppHeight, 250));
+  setAppHeight();
+  inputEl.addEventListener("focus", () => setTimeout(() => toBottom(true), 300));
+
+  // ---------- boot ----------
+  function boot() {
+    updateGpuBanner();
+    updateKeynote();
+    // warm the model list in the background so the keynote can show the default model name
+    if (webgpuOK) ensureModelList().then(() => updateKeynote()).catch(() => {});
+
+    if (adventure && adventure.messages && adventure.messages.length) {
+      renderFromState();
+      showPlay();
+      toBottom(true);
+      const last = adventure.messages[adventure.messages.length - 1];
+      if (last && last.role === "user") requestNarration();
+    } else {
+      showSetup();
+    }
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
